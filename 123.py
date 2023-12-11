@@ -1,54 +1,60 @@
 import streamlit as st
 
-# Define the scoring logic for PSQI
+# Revised PSQI score calculation function
 def calculate_psqi_score(answers):
     # Component 1: Subjective sleep quality
-    component_1 = answers['q9']
+    component_1 = convert_answer_to_score(answers['q9'])
 
     # Component 2: Sleep latency
     subscore_q2 = convert_answer_to_score(answers['q2'])
     subscore_q5a = convert_answer_to_score(answers['q5a'])
-    subscores_2 = [subscore_q2, subscore_q5a]
-    component_2 = min(3, sum(subscores_2))
+    component_2 = score_group(sum([subscore_q2, subscore_q5a]), [0, 1, 2], [3, 4], [5, 6])
 
     # Component 3: Sleep duration
-    component_3 = answers['q4_sleep_hours']
+    component_3 = score_sleep_duration(answers['q4_sleep_hours'])
 
     # Component 4: Sleep efficiency
-    bedtime_hour = int(answers['q1_bedtime_hour'])
-    wakeup_hour = int(answers['q3_wakeup_hour'])
-    sleep_hours = int(answers['q4_sleep_hours'])
-
-    # Ensure denominator is not zero before performing division
-    if (wakeup_hour - bedtime_hour) % 24 != 0:
-        sleep_efficiency = (sleep_hours / ((wakeup_hour - bedtime_hour) % 24)) * 100
-        if sleep_efficiency > 85:
-            component_4 = 0
-        elif sleep_efficiency > 75:
-            component_4 = 1
-        elif sleep_efficiency > 65:
-            component_4 = 2
-        else:
-            component_4 = 3
-    else:
-        # Handle the case where the denominator is zero
-        component_4 = 3
+    bedtime_hour = answers['q1_bedtime_hour']
+    wakeup_hour = answers['q3_wakeup_hour']
+    sleep_hours = answers['q4_sleep_hours']
+    sleep_efficiency = (sleep_hours / max(0.01, (wakeup_hour - bedtime_hour) % 24)) * 100
+    component_4 = score_group(sleep_efficiency, [85, float('inf')], [75, 84], [65, 74], [0, 64])
 
     # Component 5: Sleep disturbance
-    subscores_5 = [convert_answer_to_score(answers.get(f'q5{i}', 'Не')) for i in range(2, 10)]
-    component_5 = min(3, sum(subscores_5))
+    subscores_5 = [convert_answer_to_score(answers.get(f'q5{i}', 'Не')) for i in 'bcdefghi']
+    component_5 = score_group(sum(subscores_5), [0], [1, 9], [10, 18], [19, 27])
 
     # Component 6: Use of sleep medication
     component_6 = convert_answer_to_score(answers['q6'])
 
     # Component 7: Daytime dysfunction
     subscores_7 = [convert_answer_to_score(answers['q7']), convert_answer_to_score(answers['q8'])]
-    component_7 = min(3, sum(subscores_7))
+    component_7 = score_group(sum(subscores_7), [0], [1, 2], [3, 4], [5, 6])
 
     # Global PSQI score
-    global_score = component_1 + component_2 + component_3 + component_4 + component_5 + component_6 + component_7
+    global_score = sum([component_1, component_2, component_3, component_4, component_5, component_6, component_7])
 
     return global_score
+
+# Helper function to convert sleep duration to score
+def score_sleep_duration(hours):
+    if hours > 7:
+        return 0
+    elif 6 <= hours <= 7:
+        return 1
+    elif 5 <= hours < 6:
+        return 2
+    else:
+        return 3
+
+# Helper function to score based on ranges
+def score_group(value, *ranges):
+    for score, (lower, upper) in enumerate(ranges):
+        if lower <= value <= upper:
+            return score
+    return 0
+
+# Existing convert_answer_to_score function remains the same
 
 # Function to convert answer to score
 def convert_answer_to_score(answer):
