@@ -14,11 +14,26 @@ def calculate_psqi_score(answers):
     component_3 = score_sleep_duration(answers['q4_sleep_hours'])
 
     # Component 4: Sleep efficiency
+    def calculate_sleep_efficiency(answers):
     bedtime_hour = answers['q1_bedtime_hour']
     wakeup_hour = answers['q3_wakeup_hour']
     sleep_hours = answers['q4_sleep_hours']
-    sleep_efficiency = (sleep_hours / max(0.01, (wakeup_hour - bedtime_hour) % 24)) * 100
-    component_4 = score_group(sleep_efficiency, [85, float('inf')], [75, 84], [65, 74], [0, 64])
+
+    # Calculate hours in bed, considering crossing midnight
+    hours_in_bed = (wakeup_hour - bedtime_hour) % 24
+    if hours_in_bed == 0:
+        hours_in_bed = 24  # Assuming the person spent the whole day in bed in extreme cases
+
+    # Check for unusual cases where sleep duration is longer than time in bed
+    if sleep_hours > hours_in_bed:
+        sleep_hours = hours_in_bed  # Cap the sleep hours at hours in bed
+
+    sleep_efficiency = (sleep_hours / hours_in_bed) * 100
+    return sleep_efficiency
+
+# Use this function in your Component 4 calculation
+component_4_efficiency = calculate_sleep_efficiency(answers)
+component_4 = score_group(component_4_efficiency, [85, float('inf')], [75, 84], [65, 74], [0, 64])
 
     # Component 5: Sleep disturbance
     subscores_5 = [convert_answer_to_score(answers.get(f'q5{i}', 'Не')) for i in 'bcdefghi']
