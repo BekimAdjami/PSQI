@@ -15,26 +15,25 @@ def calculate_psqi_score(answers):
 
     # Component 4: Sleep efficiency
     def calculate_sleep_efficiency(answers):
-    bedtime_hour = answers['q1_bedtime_hour']
-    wakeup_hour = answers['q3_wakeup_hour']
-    sleep_hours = answers['q4_sleep_hours']
+        bedtime_hour = answers['q1_bedtime_hour']
+        wakeup_hour = answers['q3_wakeup_hour']
+        sleep_hours = answers['q4_sleep_hours']
 
-    # Calculate hours in bed, considering crossing midnight
-    hours_in_bed = (wakeup_hour - bedtime_hour) % 24
-    if hours_in_bed == 0:
-        hours_in_bed = 24  # Assuming the person spent the whole day in bed in extreme cases
+        # Calculate hours in bed, considering crossing midnight
+        hours_in_bed = (wakeup_hour - bedtime_hour) % 24
+        if hours_in_bed == 0:
+            hours_in_bed = 24  # Assuming the person spent the whole day in bed in extreme cases
 
-    # Check for unusual cases where sleep duration is longer than time in bed
-    if sleep_hours > hours_in_bed:
-        sleep_hours = hours_in_bed  # Cap the sleep hours at hours in bed
+        # Check for unusual cases where sleep duration is longer than time in bed
+        if sleep_hours > hours_in_bed:
+            sleep_hours = hours_in_bed  # Cap the sleep hours at hours in bed
 
-    sleep_efficiency = (sleep_hours / hours_in_bed) * 100
-    return sleep_efficiency
+        sleep_efficiency = (sleep_hours / hours_in_bed) * 100
+        return sleep_efficiency
 
 # Use this function in your Component 4 calculation
-component_4_efficiency = calculate_sleep_efficiency(answers)
-component_4 = score_group(component_4_efficiency, [85, float('inf')], [75, 84], [65, 74], [0, 64])
-
+    component_4_efficiency = calculate_sleep_efficiency(answers)
+    component_4 = score_group(component_4_efficiency, [85, float('inf')], [75, 84], [65, 74], [0, 64])
     # Component 5: Sleep disturbance
     subscores_5 = [convert_answer_to_score(answers.get(f'q5{i}', 'Не')) for i in 'bcdefghi']
     component_5 = score_group(sum(subscores_5), [0], [1, 9], [10, 18], [19, 27])
@@ -68,8 +67,6 @@ def score_group(value, *ranges):
         if lower <= value <= upper:
             return score
     return 0
-
-# Existing convert_answer_to_score function remains the same
 
 # Function to convert answer to score
 def convert_answer_to_score(answer):
